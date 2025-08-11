@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16
+    container_name: grocademy_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: gro
+      POSTGRES_PASSWORD: passgro
+      POSTGRES_DB: grocademy
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

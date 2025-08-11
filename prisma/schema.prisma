@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  username   String   @unique
+  email      String   @unique
+  password   String
+  firstName  String
+  lastName   String
+  balance    Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  purchases  Enrollment[]
+  courses    Course[] @relation("creatorCourses")
+  completions Completion[]
+}
+
+model Course {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  instructor  String
+  topics      String[]   
+  price       Float
+  thumbnailImage   String?    // storage key / url
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  creator     User?      @relation("creatorCourses", fields: [creatorId], references: [id])
+  creatorId   Int?
+  modules     Module[]
+  enrollments Enrollment[]
+}
+
+model Module {
+  id          Int      @id @default(autoincrement())
+  course      Course   @relation(fields: [courseId], references: [id])
+  courseId    Int
+  title       String
+  description String
+  order       Int
+  pdfContent         String?   // storage key/url
+  videoContent       String?   // storage key/url
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completions Completion[]
+
+  @@unique([courseId, order]) // ensure unique order per course
+}
+
+model Enrollment {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  courseId  Int
+  purchasedAt DateTime @default(now())
+}
+
+model Completion {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  module    Module   @relation(fields: [moduleId], references: [id])
+  moduleId  Int
+  completedAt DateTime @default(now())
+}
