@@ -8,68 +8,117 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id         Int      @id @default(autoincrement())
-  username   String   @unique
-  email      String   @unique
-  password   String
-  firstName  String
-  lastName   String
-  balance    Float    @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+enum Role {
+  USER
+  ADMIN
+}
 
-  purchases  Enrollment[]
-  courses    Course[] @relation("creatorCourses")
+model User {
+  id          Int       @id @default(autoincrement())
+  username    String    @unique
+  email       String    @unique
+  password    String
+  firstName   String
+  lastName    String
+  balance     Float     @default(0)
+  role        Role      @default(USER)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  purchases   Enrollment[]
+  courses     Course[]  @relation("creatorCourses")
   completions Completion[]
+  certificates Certificate[]
+  reviews     Review[]
 }
 
 model Course {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  instructor  String
-  topics      String[]   
-  price       Float
-  thumbnailImage   String?    // storage key / url
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  creator     User?      @relation("creatorCourses", fields: [creatorId], references: [id])
-  creatorId   Int?
-  modules     Module[]
-  enrollments Enrollment[]
+  id             Int        @id @default(autoincrement())
+  title          String
+  description    String
+  instructor     String
+  topics         String[]
+  price          Float
+  thumbnailImage String?    // storage key/url 
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  creator      User?     @relation("creatorCourses", fields: [creatorId], references: [id])
+  creatorId    Int?
+  modules      Module[]
+  enrollments  Enrollment[]
+  reviews      Review[]
+  certificates Certificate[]
+
+  @@index([title])
+  @@index([instructor])
 }
 
 model Module {
-  id          Int      @id @default(autoincrement())
-  course      Course   @relation(fields: [courseId], references: [id])
-  courseId    Int
-  title       String
-  description String
-  order       Int
-  pdfContent         String?   // storage key/url
-  videoContent       String?   // storage key/url
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  completions Completion[]
+  id           Int       @id @default(autoincrement())
+  course       Course    @relation(fields: [courseId], references: [id])
+  courseId     Int
+  title        String
+  description  String
+  order        Int
+  pdfContent   String?   // storage key/url 
+  videoContent String?   // storage key/url 
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  @@unique([courseId, order]) // ensure unique order per course
+  completions  Completion[]
+
+  @@unique([courseId, order]) // ensure unique order per course 
 }
 
 model Enrollment {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  course    Course   @relation(fields: [courseId], references: [id])
-  courseId  Int
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  course      Course   @relation(fields: [courseId], references: [id])
+  courseId    Int
   purchasedAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
 }
 
 model Completion {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  module    Module   @relation(fields: [moduleId], references: [id])
-  moduleId  Int
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  module      Module   @relation(fields: [moduleId], references: [id])
+  moduleId    Int
   completedAt DateTime @default(now())
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
+}
+
+model Certificate {
+  id       Int      @id @default(autoincrement())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId Int
+  url      String
+  issuedAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  Int
+  rating    Int      // 1..5
+  comment   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@index([courseId])
 }
