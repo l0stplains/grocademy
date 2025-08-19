@@ -42,7 +42,7 @@ model Course {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  creator      User?     @relation("creatorCourses", fields: [creatorId], references: [id])
+  creator      User?     @relation("creatorCourses", fields: [creatorId], references: [id], onDelete: SetNull)
   creatorId    Int?
   modules      Module[]
   enrollments  Enrollment[]
@@ -55,7 +55,7 @@ model Course {
 
 model Module {
   id           Int       @id @default(autoincrement())
-  course       Course    @relation(fields: [courseId], references: [id])
+  course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId     Int
   title        String
   description  String
@@ -72,9 +72,9 @@ model Module {
 
 model Enrollment {
   id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
-  course      Course   @relation(fields: [courseId], references: [id])
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId    Int
   purchasedAt DateTime @default(now())
 
@@ -85,9 +85,9 @@ model Enrollment {
 
 model Completion {
   id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
-  module      Module   @relation(fields: [moduleId], references: [id])
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   moduleId    Int
   completedAt DateTime @default(now())
 
