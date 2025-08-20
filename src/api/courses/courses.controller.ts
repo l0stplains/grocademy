@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { CoursesService } from './courses.service';
+import { PurchasesService } from './purchases.service'; // <-- add
 import { CreateCourseDto, UpdateCourseDto } from './dto/create-course.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -32,7 +33,10 @@ function imageFilter(_req: any, file: Express.Multer.File, cb: Function) {
 @ApiTags('Courses')
 @Controller('api/courses')
 export class CoursesController {
-  constructor(private readonly courses: CoursesService) {}
+  constructor(
+    private readonly courses: CoursesService,
+    private readonly purchases: PurchasesService,
+  ) {}
 
   @Post()
   @ApiBearerAuth()
@@ -78,6 +82,41 @@ export class CoursesController {
       __raw: true,
       payload: { status: 'success', message: '', data: items, pagination },
     };
+  }
+
+  @Get('my-courses')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiQuery({ name: 'q', required: false })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async mine(
+    @CurrentUser() user: { id: number; role: 'ADMIN' | 'USER' },
+    @Query('q') q?: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '15',
+  ) {
+    const { items, pagination } = await this.purchases.myCourses(
+      user.id,
+      q,
+      Number(page),
+      Number(limit),
+    );
+    return {
+      __raw: true,
+      payload: { status: 'success', message: '', data: items, pagination },
+    };
+  }
+
+  @Post(':id/buy')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async buy(
+    @Param('id', ParseIntPipe) courseId: number,
+    @CurrentUser() user: { id: number; role: 'ADMIN' | 'USER' },
+  ) {
+    const data = await this.purchases.buyCourse(user.id, courseId);
+    return { message: 'purchased', data };
   }
 
   @Get(':id')
