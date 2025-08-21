@@ -39,7 +39,6 @@ export class PurchasesService {
       this.prisma.enrollment.create({
         data: { userId, courseId },
       }),
-      // Note: i think it would be better if i had transaction table for history. hope i get enough time
     ]);
 
     // fresh balance

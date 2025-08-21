@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -75,16 +76,7 @@ export class UsersService {
     };
   }
 
-  async update(
-    id: number,
-    dto: {
-      email?: string;
-      username?: string;
-      firstName?: string;
-      lastName?: string;
-      password?: string;
-    },
-  ) {
+  async update(id: number, dto: UpdateUserDto) {
     const u = await this.prisma.user.findUnique({ where: { id } });
     if (!u) throw new NotFoundException('User not found');
     if (u.role === 'ADMIN')

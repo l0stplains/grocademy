@@ -76,7 +76,7 @@ export class AuthService {
       role: user.role as any,
       username: user.username,
     });
-    return { username: user.username, token };
+    return { username: user.username, token, is_admin: user.role === 'ADMIN' };
   }
 
   async self(userId: number) {

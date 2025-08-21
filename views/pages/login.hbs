@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <script defer src="/static/assets/js/app.js"></script>
+</head>
+<body>
+  {{> navbar}}
+  <main class="container" style="max-width:720px">
+    <h1>Welcome back</h1>
+    {{#if ok}}<div class="alert success">Registered! Please login.</div>{{/if}}
+    {{#if error}}<div class="alert error">{{error}}</div>{{/if}}
+
+    <form method="post" action="/login" class="card">
+      <div class="form-row">
+        <label>Email or Username
+          <input name="identifier" placeholder="you@example.com or yourname" required>
+        </label>
+        <label>Password
+          <input type="password" name="password" minlength="8" required>
+        </label>
+        <button class="btn primary block" type="submit">Login</button>
+      </div>
+    </form>
+    <p class="muted">No account? <a href="/register" style="color:var(--blue)">Create one</a></p>
+  </main>
+  {{> footer year="2025"}}
+</body>
+</html>

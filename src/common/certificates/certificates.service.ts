@@ -67,7 +67,7 @@ export class CertificatesService {
 
     doc.fillOpacity(0.08);
 
-    doc.image('./public/assets/grocademy512x512.png', watermarkX, watermarkY, {
+    doc.image('./public/assets/img/logo.png', watermarkX, watermarkY, {
       width: watermarkSize,
       height: watermarkSize,
     });

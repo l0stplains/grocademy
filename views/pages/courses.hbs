@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <script defer src="/static/assets/js/app.js"></script>
+</head>
+<body>
+  {{> navbar page="browse" user=user}}
+  <main class="container">
+    <div class="space-between">
+      <h1>Browse Courses</h1>
+      <form class="row" method="get" action="/courses" data-debounce="search" style="gap:8px">
+        <input name="q" placeholder="Search title, topic, instructor…" value="{{q}}" style="min-width:240px">
+        <select name="limit" aria-label="Results per page">
+          <option value="10" {{#if (eq limit 10)}}selected{{/if}}>10</option>
+          <option value="15" {{#if (eq limit 15)}}selected{{/if}}>15</option>
+          <option value="25" {{#if (eq limit 25)}}selected{{/if}}>25</option>
+          <option value="50" {{#if (eq limit 50)}}selected{{/if}}>50</option>
+        </select>
+        <button class="btn" type="submit">Search</button>
+      </form>
+    </div>
+
+    <section class="grid cards" style="margin-top:16px">
+      {{#each courses}}
+        <a class="card" href="/courses/{{this.id}}">
+          <img class="thumb" src="{{this.thumbnail_image}}" alt="" onerror="this.style.display='none'">
+          <h3>{{this.title}}</h3>
+          <p class="muted">By {{this.instructor}}</p>
+          <div style="margin:.5rem 0">
+            {{#each this.topics}}
+              <span class="badge topic">{{this}}</span>
+            {{/each}}
+          </div>
+          <div class="space-between">
+            <span class="badge price">Modules: {{this.total_modules}}</span>
+            {{#if this.is_purchased}}
+              <span class="badge owned">Owned</span>
+            {{else}}
+              <span class="badge">Price: ${{this.price}}</span>
+            {{/if}}
+          </div>
+        </a>
+      {{/each}}
+    </section>
+
+    <nav class="pagination" aria-label="Pagination">
+      {{#if (gt pagination.current_page 1)}}
+        <a href="?q={{q}}&limit={{limit}}&page={{dec pagination.current_page}}">Prev</a>
+      {{/if}}
+      <span>Page {{pagination.current_page}} / {{pagination.total_pages}}</span>
+      {{#if (lt pagination.current_page pagination.total_pages)}}
+        <a href="?q={{q}}&limit={{limit}}&page={{inc pagination.current_page}}">Next</a>
+      {{/if}}
+    </nav>
+  </main>
+  {{> footer year="2025"}}
+</body>
+</html>

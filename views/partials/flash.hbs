@@ -1,0 +1,5 @@
+{{#if flash}}
+  <div class="container">
+    <div class="alert {{#if flash.error}}error{{else}}success{{/if}}">{{flash.message}}</div>
+  </div>
+{{/if}}

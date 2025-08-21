@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
@@ -10,8 +11,16 @@ import {
 export class RegisterDto {
   @ApiProperty() @IsEmail() email!: string;
   @ApiProperty() @IsString() @IsNotEmpty() username!: string;
-  @ApiProperty() @IsString() @IsNotEmpty() firstName!: string;
-  @ApiProperty() @IsString() @IsNotEmpty() lastName!: string;
+  @ApiProperty({ name: 'first_name' })
+  @Expose({ name: 'first_name' })
+  @IsString()
+  @IsNotEmpty()
+  firstName!: string;
+  @ApiProperty({ name: 'last_name' })
+  @Expose({ name: 'last_name' })
+  @IsString()
+  @IsNotEmpty()
+  lastName!: string;
 
   @ApiProperty({ description: 'min 8 chars, letters+numbers' })
   @IsString()

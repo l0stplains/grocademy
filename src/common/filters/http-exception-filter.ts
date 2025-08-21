@@ -26,10 +26,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message = (res && res.message) || exception.message || message;
     }
 
-    this.logger.error(
-      `HTTP Status: ${status} Error Message: ${message}`,
-      exception instanceof Error ? exception.stack : '',
-    );
+    if (process.env.NODE_ENV !== 'production') {
+      // kinda spammy
+      this.logger.error(
+        `HTTP Status: ${status} Error Message: ${message}`,
+        exception instanceof Error ? exception.stack : '',
+      );
+    }
 
     response.status(status).json({
       status: 'error',

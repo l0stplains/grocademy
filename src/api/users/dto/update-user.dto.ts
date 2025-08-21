@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
@@ -14,8 +15,16 @@ export class UpdateUserDto {
   @IsString()
   @IsNotEmpty()
   username?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() firstName?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() lastName?: string;
+  @ApiPropertyOptional({ name: 'first_name' })
+  @Expose({ name: 'first_name' })
+  @IsOptional()
+  @IsString()
+  firstName?: string;
+  @ApiPropertyOptional({ name: 'last_name' })
+  @Expose({ name: 'last_name' })
+  @IsOptional()
+  @IsString()
+  lastName?: string;
   @ApiPropertyOptional({ description: 'min 8 chars, letters+numbers' })
   @IsOptional()
   @IsString()

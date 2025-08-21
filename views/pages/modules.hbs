@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <script defer src="/static/assets/js/app.js"></script>
+</head>
+<body>
+  {{> navbar user=user}}
+  <main class="container">
+    <div class="layout">
+      <aside class="sidebar">
+        <h2>Course modules</h2>
+        <div class="hr"></div>
+        <div class="grid" style="gap:10px">
+          {{#each modules}}
+            <a class="module-item {{#if this.is_completed}}done{{/if}} {{#if (eq this.id ../selected.id)}}active{{/if}}" href="/courses/{{../courseId}}/modules?m={{this.id}}">
+              <span class="dot"></span>
+              <div>
+                <strong>#{{this.order}} — {{this.title}}</strong>
+                <small>{{this.description}}</small>
+              </div>
+            </a>
+          {{/each}}
+        </div>
+      </aside>
+
+      <section class="content">
+        {{#if selected}}
+          <div class="space-between">
+            <h1>#{{selected.order}} — {{selected.title}}</h1>
+            <span id="module-done-badge" class="badge owned {{#unless selected.is_completed}}hidden{{/unless}}">Completed</span>
+          </div>
+          <p class="muted">{{selected.description}}</p>
+
+          {{#if selected.pdf_content}}
+            <div class="media-frame" style="margin:12px 0">
+              <iframe src="{{selected.pdf_content}}" title="Module PDF" style="width:100%;height:100%;border:0"></iframe>
+            </div>
+          {{/if}}
+
+          {{#if selected.video_content}}
+            <div class="media-frame" style="margin:12px 0">
+              <video controls style="width:100%;height:100%">
+                <source src="{{selected.video_content}}">
+              </video>
+            </div>
+          {{/if}}
+
+          {{#unless selected.is_completed}}
+            <form id="complete-module-form" method="post" action="/modules/{{selected.id}}/complete?courseId={{../courseId}}" data-module-id="{{selected.id}}">
+              <button class="btn primary" type="submit">Mark as completed</button>
+            </form>
+          {{/unless}}
+
+          <div class="hr"></div>
+          <div aria-label="Course progress" class="progress"><div id="course-progress" style="width: 0%"></div></div>
+          <a id="certificate-link" class="btn hidden" href="#" target="_blank">Download Certificate</a>
+
+        {{else}}
+          <div class="alert">No module selected.</div>
+        {{/if}}
+      </section>
+    </div>
+  </main>
+  {{> footer year="2025"}}
+</body>
+</html>

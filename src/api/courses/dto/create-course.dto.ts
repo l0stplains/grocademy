@@ -48,7 +48,11 @@ export class CreateCourseDto {
   @Min(0)
   price!: number;
 
-  // handled by multipart file: thumbnail_image?: file
+  // thumbnail image is optional
+  @ApiProperty({ type: 'string', format: 'binary', required: false })
+  @IsOptional()
+  thumbnail_image?: Express.Multer.File;
+  // Note: thumbnail is handled in the controlle
 }
 
 export class UpdateCourseDto {

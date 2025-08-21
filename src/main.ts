@@ -9,6 +9,7 @@ import { join } from 'path';
 import * as hbs from 'hbs';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -21,6 +22,14 @@ async function bootstrap() {
   app.setBaseViewsDir(join(ROOT, 'views'));
   app.setViewEngine('hbs');
   hbs.registerPartials(join(ROOT, 'views', 'partials'));
+  (hbs as any).registerHelper('inc', (v: any) => Number(v) + 1);
+  (hbs as any).registerHelper('dec', (v: any) => Number(v) - 1);
+  (hbs as any).registerHelper(
+    'eq',
+    (a: any, b: any) => String(a) === String(b),
+  );
+  (hbs as any).registerHelper('gt', (a: any, b: any) => Number(a) > Number(b));
+  (hbs as any).registerHelper('lt', (a: any, b: any) => Number(a) < Number(b));
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -31,6 +40,8 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
+
+  app.use(cookieParser());
 
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
@@ -47,7 +58,7 @@ async function bootstrap() {
   SwaggerModule.setup('/docs', app, document);
 
   const PORT = process.env.PORT || 3000;
-  await app.listen(PORT);
+  await app.listen(PORT, '0.0.0.0');
 
   logger.log(`Server running on http://localhost:${PORT}`);
   logger.log(`Swagger docs available at http://localhost:${PORT}/docs`);
