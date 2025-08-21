@@ -158,4 +158,15 @@ export class ModulesController {
     const arr = await this.modules.reorder(courseId, body.module_order);
     return { message: 'reordered', data: { module_order: arr } };
   }
+
+  @Patch('api/modules/:id/complete')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async complete(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: { id: number; role: 'ADMIN' | 'USER' },
+  ) {
+    const data = await this.modules.complete(id, user.id);
+    return { message: 'completed', data };
+  }
 }

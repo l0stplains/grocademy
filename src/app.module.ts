@@ -5,9 +5,16 @@ import { AppController } from './app.controller';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AppService } from './app.service';
 import { StorageModule } from './common/storage/storage.module';
+import { CertificatesModule } from './common/certificates/certificates.module';
 
 @Module({
-  imports: [PrismaModule, PagesModule, ApiModule, StorageModule],
+  imports: [
+    PrismaModule,
+    PagesModule,
+    ApiModule,
+    StorageModule,
+    CertificatesModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

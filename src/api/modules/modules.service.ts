@@ -1,17 +1,21 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { LocalStorageService } from '../../common/storage/local-storage.service';
+import { CertificatesService } from '../../common/certificates/certificates.service';
 import { CreateModuleDto, UpdateModuleDto } from './dto/create-module.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ModulesService {
   constructor(
     private prisma: PrismaService,
     private storage: LocalStorageService,
+    private certs: CertificatesService,
   ) {}
 
   private async assertCourseReadable(
@@ -245,5 +249,95 @@ export class ModulesService {
     });
 
     return sorted.map((s) => ({ id: String(s.id), order: s.order }));
+  }
+
+  private async assertPurchased(courseId: number, userId: number) {
+    const owned = await this.prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    });
+    if (!owned)
+      throw new ForbiddenException('You have not purchased this course');
+  }
+
+  async complete(moduleId: number, userId: number) {
+    const mod = await this.prisma.module.findUnique({
+      where: { id: moduleId },
+    });
+    if (!mod) throw new NotFoundException('Module not found');
+
+    await this.assertPurchased(mod.courseId, userId);
+
+    // create completion if not exists
+    await this.prisma.completion.upsert({
+      where: { userId_moduleId: { userId, moduleId } },
+      create: { userId, moduleId },
+      update: {},
+    });
+
+    const [totalModules, completedModules] = await Promise.all([
+      this.prisma.module.count({ where: { courseId: mod.courseId } }),
+      this.prisma.completion.count({
+        where: { userId, module: { courseId: mod.courseId } },
+      }),
+    ]);
+
+    const percentage =
+      totalModules > 0
+        ? Math.round((completedModules / totalModules) * 100)
+        : 0;
+
+    let certificateUrl: string | null = null;
+    if (totalModules > 0 && completedModules === totalModules) {
+      certificateUrl = await this.prisma.$transaction(
+        async (tx) => {
+          // recheck inside the txn
+          const existing = await tx.certificate.findUnique({
+            where: { userId_courseId: { userId, courseId: mod.courseId } },
+            select: { url: true },
+          });
+          if (existing) return existing.url;
+
+          // fetch details
+          const [user, course] = await Promise.all([
+            tx.user.findUnique({
+              where: { id: userId },
+              select: { username: true },
+            }),
+            tx.course.findUnique({
+              where: { id: mod.courseId },
+              select: { title: true, instructor: true },
+            }),
+          ]);
+          if (!user || !course) {
+            throw new BadRequestException('Unable to generate certificate');
+          }
+
+          const { url } = await this.certs.generatePdf({
+            username: user.username,
+            courseTitle: course.title,
+            instructor: course.instructor,
+            issuedAt: new Date(),
+          });
+
+          const created = await tx.certificate.create({
+            data: { userId, courseId: mod.courseId, url },
+            select: { url: true },
+          });
+          return created.url;
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    }
+
+    return {
+      module_id: String(mod.id),
+      is_completed: true,
+      course_progress: {
+        total_modules: totalModules,
+        completed_modules: completedModules,
+        percentage,
+      },
+      certificate_url: certificateUrl,
+    };
   }
 }

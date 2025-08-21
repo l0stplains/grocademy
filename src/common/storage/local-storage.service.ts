@@ -13,20 +13,32 @@ function sanitize(name: string) {
 export class LocalStorageService implements IStorageService {
   private publicRoot = join(process.cwd(), 'public');
 
-  async save(file: Express.Multer.File, folder: string) {
+  private async writeFile(
+    buffer: Buffer,
+    folder: string,
+    originalname: string,
+  ) {
     // Note: size limit set up in mutler on controller level yak
     const dir = join(this.publicRoot, 'uploads', folder);
     await fs.mkdir(dir, { recursive: true });
 
-    const ext = extname(file.originalname) || '';
-    const safeName = sanitize(file.originalname.replace(ext, ''));
+    const ext = extname(originalname) || '';
+    const safeName = sanitize(originalname.replace(ext, ''));
     const filename = `${Date.now()}-${randomUUID()}-${safeName}${ext}`;
 
     const full = join(dir, filename);
-    await fs.writeFile(full, file.buffer);
+    await fs.writeFile(full, buffer);
 
     const url = `/static/uploads/${folder}/${filename}`;
     return { url, key: `uploads/${folder}/${filename}` };
+  }
+
+  async save(file: Express.Multer.File, folder: string) {
+    return this.writeFile(file.buffer, folder, file.originalname);
+  }
+
+  async saveBuffer(buf: Buffer, filename: string, folder: string) {
+    return this.writeFile(buf, folder, filename);
   }
 
   async removeByUrl(url: string) {

@@ -5,11 +5,6 @@ import { CoursesModule } from './courses/courses.module';
 import { ModulesModule } from './modules/modules.module';
 
 @Module({
-  imports: [
-    AuthModule,
-    UsersModule,
-    CoursesModule,
-    ModulesModule,
-  ],
+  imports: [AuthModule, UsersModule, CoursesModule, ModulesModule],
 })
 export class ApiModule {}
