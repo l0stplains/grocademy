@@ -1,21 +1,26 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { LocalStorageService } from '../../common/storage/local-storage.service';
 import { CertificatesService } from '../../common/certificates/certificates.service';
 import { CreateModuleDto, UpdateModuleDto } from './dto/create-module.dto';
 import { Prisma } from '@prisma/client';
 import { CacheService } from '../../common/cache/cache.service';
+import {
+  STORAGE_TOKEN,
+  IStorageService,
+} from '../../common/storage/storage.types';
+import * as mime from 'mime-types';
 
 @Injectable()
 export class ModulesService {
   constructor(
     private prisma: PrismaService,
-    private storage: LocalStorageService,
+    @Inject(STORAGE_TOKEN) private storage: IStorageService,
     private certs: CertificatesService,
     private cache: CacheService,
   ) {}
@@ -57,12 +62,32 @@ export class ModulesService {
     });
     if (!course) throw new NotFoundException('Course not found');
 
-    const pdfUrl = files.pdf_content
-      ? (await this.storage.save(files.pdf_content, 'pdfs')).url
-      : null;
-    const videoUrl = files.video_content
-      ? (await this.storage.save(files.video_content, 'videos')).url
-      : null;
+    let pdfUrl: string | null = null;
+    let videoUrl: string | null = null;
+
+    if (files?.pdf_content) {
+      const f = files.pdf_content;
+      const ext = mime.extension(f.mimetype) || 'pdf';
+      const key = `pdfs/${courseId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { url } = await this.storage.upload({
+        buffer: f.buffer,
+        key,
+        contentType: f.mimetype,
+      });
+      pdfUrl = url;
+    }
+
+    if (files?.video_content) {
+      const f = files.video_content;
+      const ext = mime.extension(f.mimetype) || 'mp4';
+      const key = `videos/${courseId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { url } = await this.storage.upload({
+        buffer: f.buffer,
+        key,
+        contentType: f.mimetype,
+      });
+      videoUrl = url;
+    }
 
     const order = dto.order ?? (await this.nextOrder(courseId));
     const m = await this.prisma.module.create({
@@ -183,13 +208,30 @@ export class ModulesService {
     let pdf = m.pdfContent;
     let vid = m.videoContent;
 
-    if (files.pdf_content) {
+    if (files?.pdf_content) {
+      const f = files.pdf_content;
+      const ext = mime.extension(f.mimetype) || 'pdf';
+      const key = `pdfs/${m.courseId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { url } = await this.storage.upload({
+        buffer: f.buffer,
+        key,
+        contentType: f.mimetype,
+      });
       if (pdf) await this.storage.removeByUrl(pdf);
-      pdf = (await this.storage.save(files.pdf_content, 'pdfs')).url;
+      pdf = url;
     }
-    if (files.video_content) {
+
+    if (files?.video_content) {
+      const f = files.video_content;
+      const ext = mime.extension(f.mimetype) || 'mp4';
+      const key = `videos/${m.courseId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { url } = await this.storage.upload({
+        buffer: f.buffer,
+        key,
+        contentType: f.mimetype,
+      });
       if (vid) await this.storage.removeByUrl(vid);
-      vid = (await this.storage.save(files.video_content, 'videos')).url;
+      vid = url;
     }
 
     const updated = await this.prisma.module.update({

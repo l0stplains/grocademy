@@ -49,6 +49,13 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       RUN_SEED: ${RUN_SEED}
 
+      STORAGE_DRIVER: ${STORAGE_DRIVER}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET: ${R2_BUCKET}
+      R2_PUBLIC_BASE: ${R2_PUBLIC_BASE}
+
     depends_on:
       postgres:
         condition: service_healthy

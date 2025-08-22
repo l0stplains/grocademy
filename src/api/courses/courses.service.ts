@@ -1,26 +1,39 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
-import { LocalStorageService } from '../../common/storage/local-storage.service';
 import { CreateCourseDto, UpdateCourseDto } from './dto/create-course.dto';
 import { CacheService } from '../../common/cache/cache.service';
+import {
+  STORAGE_TOKEN,
+  IStorageService,
+} from '../../common/storage/storage.types';
+import * as mime from 'mime-types';
 
 @Injectable()
 export class CoursesService {
   constructor(
     private prisma: PrismaService,
-    private storage: LocalStorageService,
+    @Inject(STORAGE_TOKEN) private storage: IStorageService,
     private cache: CacheService,
   ) {}
 
   async create(dto: CreateCourseDto, thumbnail?: Express.Multer.File) {
-    const thumbUrl = thumbnail
-      ? (await this.storage.save(thumbnail, 'thumbnails')).url
-      : null;
+    let thumbUrl: string | null = null;
+    if (thumbnail) {
+      const ext = mime.extension(thumbnail.mimetype) || 'bin';
+      const key = `thumbnails/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { url } = await this.storage.upload({
+        buffer: thumbnail.buffer,
+        key,
+        contentType: thumbnail.mimetype,
+      });
+      thumbUrl = url;
+    }
     const course = await this.prisma.course.create({
       data: {
         title: dto.title,
@@ -165,8 +178,15 @@ export class CoursesService {
 
     let thumbUrl = c.thumbnailImage;
     if (thumbnail) {
+      const ext = mime.extension(thumbnail.mimetype) || 'bin';
+      const key = `thumbnails/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { url } = await this.storage.upload({
+        buffer: thumbnail.buffer,
+        key,
+        contentType: thumbnail.mimetype,
+      });
       if (thumbUrl) await this.storage.removeByUrl(thumbUrl);
-      thumbUrl = (await this.storage.save(thumbnail, 'thumbnails')).url;
+      thumbUrl = url;
     }
 
     const updated = await this.prisma.course.update({

@@ -9,7 +9,6 @@ import { CertificatesModule } from './common/certificates/certificates.module';
 import { JwtCookieMiddleware } from './common/middleware/jwt-cookie.middleware';
 import { RedisModule } from './common/redis/redis.module';
 import { CacheModule } from './common/cache/cache.module';
-import { RedisService } from './common/redis/redis.service';
 
 @Module({
   imports: [

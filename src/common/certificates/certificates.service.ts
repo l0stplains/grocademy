@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as PDFDocument from 'pdfkit';
-import { LocalStorageService } from '../storage/local-storage.service';
+import {
+  STORAGE_TOKEN,
+  IStorageService,
+} from '../../common/storage/storage.types';
 
 @Injectable()
 export class CertificatesService {
-  constructor(private storage: LocalStorageService) {}
+  constructor(@Inject(STORAGE_TOKEN) private storage: IStorageService) {}
 
   async generatePdf(params: {
     username: string;
@@ -249,11 +252,13 @@ export class CertificatesService {
     doc.end();
 
     const buffer = await done;
-    const { url } = await this.storage.saveBuffer(
+
+    const key = `certificates/${params.username}_${params.courseTitle}_${Date.now()}.pdf`; // idk if this is unique enough
+    const { url } = await this.storage.upload({
       buffer,
-      `certificate-${params.username}-${params.courseTitle}.pdf`,
-      'certificates',
-    );
+      key,
+      contentType: 'application/pdf',
+    });
 
     return { url };
   }
