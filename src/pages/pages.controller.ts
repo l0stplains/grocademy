@@ -51,12 +51,10 @@ export class PagesController {
       });
       res.redirect('/courses');
     } catch (e: any) {
-      res
-        .status(HttpStatus.UNAUTHORIZED)
-        .render('pages/login', {
-          error: e?.message ?? 'Login failed',
-          title: 'Login - Grocademy',
-        });
+      res.status(HttpStatus.UNAUTHORIZED).render('pages/login', {
+        error: e?.message ?? 'Login failed',
+        title: 'Login - Grocademy',
+      });
     }
     return { __raw: true, payload: null };
   }
@@ -91,12 +89,10 @@ export class PagesController {
       } as any);
       res.redirect('/login?ok=1');
     } catch (e: any) {
-      res
-        .status(HttpStatus.BAD_REQUEST)
-        .render('pages/register', {
-          error: e?.message ?? 'Registration failed',
-          title: 'Register - Grocademy',
-        });
+      res.status(HttpStatus.BAD_REQUEST).render('pages/register', {
+        error: e?.message ?? 'Registration failed',
+        title: 'Register - Grocademy',
+      });
     }
     return { __raw: true, payload: null };
   }

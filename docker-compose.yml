@@ -1,16 +1,72 @@
 version: '3.8'
+
 services:
   postgres:
     image: postgres:16
     container_name: grocademy_postgres
     restart: always
     environment:
-      POSTGRES_USER: gro
-      POSTGRES_PASSWORD: passgro
-      POSTGRES_DB: grocademy
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: grocademy_redis
+    restart: always
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    container_name: grocademy_app
+    restart: always
+    environment:
+      NODE_ENV: production
+      TZ: ${TZ}
+      PORT: ${PORT}
+
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+
+      JWT_SECRET: ${JWT_SECRET}
+      RUN_SEED: ${RUN_SEED}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "3000"
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: grocademy_nginx
+    restart: always
+    depends_on:
+      app:
+        condition: service_started
+    ports:
+      - "8080:80"          # browse at http://localhost
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
 volumes:
   pgdata:

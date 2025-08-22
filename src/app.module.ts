@@ -7,6 +7,9 @@ import { AppService } from './app.service';
 import { StorageModule } from './common/storage/storage.module';
 import { CertificatesModule } from './common/certificates/certificates.module';
 import { JwtCookieMiddleware } from './common/middleware/jwt-cookie.middleware';
+import { RedisModule } from './common/redis/redis.module';
+import { CacheModule } from './common/cache/cache.module';
+import { RedisService } from './common/redis/redis.service';
 
 @Module({
   imports: [
@@ -15,6 +18,8 @@ import { JwtCookieMiddleware } from './common/middleware/jwt-cookie.middleware';
     ApiModule,
     StorageModule,
     CertificatesModule,
+    RedisModule,
+    CacheModule,
   ],
   controllers: [AppController],
   providers: [AppService],

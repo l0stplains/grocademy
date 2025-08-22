@@ -23,9 +23,17 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force --skip-seed",
-    "docker:db:start": "docker compose up -d",
-    "docker:db:stop": "docker compose down",
-    "docker:db:reset": "docker compose down -v && docker compose up -d"
+    "migrate:deploy": "prisma migrate deploy",
+    "docker:db:start": "docker compose up -d postgres",
+    "docker:db:stop": "docker compose stop postgres",
+    "docker:redis:start": "docker compose up -d redis",
+    "docker:redis:stop": "docker compose stop redis",
+    "docker:up:build": "docker compose up -d --build",
+    "docker:up": "docker compose up -d",
+    "docker:down:volumes": "docker compose down -v",
+    "docker:logs:all": "docker compose logs -f",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f app"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -39,6 +47,7 @@
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",
     "hbs": "^4.2.0",
+    "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

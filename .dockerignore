@@ -1,0 +1,15 @@
+# build artifacts
+dist
+node_modules
+pnpm-store
+*.log
+.tmp
+.tmp-*
+.cache
+coverage
+
+# local env / editors
+.env
+.DS_Store
+.vscode
+.idea

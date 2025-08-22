@@ -9,6 +9,7 @@ import { LocalStorageService } from '../../common/storage/local-storage.service'
 import { CertificatesService } from '../../common/certificates/certificates.service';
 import { CreateModuleDto, UpdateModuleDto } from './dto/create-module.dto';
 import { Prisma } from '@prisma/client';
+import { CacheService } from '../../common/cache/cache.service';
 
 @Injectable()
 export class ModulesService {
@@ -16,7 +17,12 @@ export class ModulesService {
     private prisma: PrismaService,
     private storage: LocalStorageService,
     private certs: CertificatesService,
+    private cache: CacheService,
   ) {}
+
+  private versionNameForCourse(courseId: number) {
+    return `modules:${courseId}`;
+  }
 
   private async assertCourseReadable(
     courseId: number,
@@ -69,6 +75,8 @@ export class ModulesService {
         videoContent: videoUrl,
       },
     });
+    await this.cache.bump(this.versionNameForCourse(courseId));
+    await this.cache.bump('courses'); // total_modules changed
     return this.toPublic(m, false);
   }
 
@@ -99,34 +107,51 @@ export class ModulesService {
     const current = Math.max(+page || 1, 1);
     const skip = (current - 1) * take;
 
-    const [total, rows] = await this.prisma.$transaction([
-      this.prisma.module.count({ where: { courseId } }),
-      this.prisma.module.findMany({
-        where: { courseId },
-        skip,
-        take,
-        orderBy: { order: 'asc' },
-      }),
-    ]);
+    // cache user-agnostic module rows
+    const base = await this.cache.wrap(
+      'modules:list',
+      this.versionNameForCourse(courseId),
+      `course=${courseId}&page=${current}&limit=${take}`,
+      60,
+      async () => {
+        const [total, rows] = await this.prisma.$transaction([
+          this.prisma.module.count({ where: { courseId } }),
+          this.prisma.module.findMany({
+            where: { courseId },
+            skip,
+            take,
+            orderBy: { order: 'asc' },
+          }),
+        ]);
+        const items = rows.map((r) => this.toPublic(r, false));
+        return {
+          items,
+          pagination: {
+            current_page: current,
+            total_pages: Math.max(1, Math.ceil(total / take)),
+            total_items: total,
+          },
+        };
+      },
+    );
 
+    // per-user completion overlay (not cached)
     let completedSet = new Set<number>();
     if (user.role !== 'ADMIN') {
       const completions = await this.prisma.completion.findMany({
-        where: { userId: user.id, moduleId: { in: rows.map((r) => r.id) } },
+        where: {
+          userId: user.id,
+          moduleId: { in: base.items.map((r) => Number(r.id)) },
+        },
         select: { moduleId: true },
       });
       completedSet = new Set(completions.map((c) => c.moduleId));
     }
-
-    const data = rows.map((r) => this.toPublic(r, completedSet.has(r.id)));
-    return {
-      items: data,
-      pagination: {
-        current_page: current,
-        total_pages: Math.max(1, Math.ceil(total / take)),
-        total_items: total,
-      },
-    };
+    const items = base.items.map((r) => ({
+      ...r,
+      is_completed: completedSet.has(Number(r.id)),
+    }));
+    return { items, pagination: base.pagination };
   }
 
   async getById(id: number, user: { id: number; role: 'ADMIN' | 'USER' }) {
@@ -177,6 +202,8 @@ export class ModulesService {
         videoContent: vid,
       },
     });
+    await this.cache.bump(this.versionNameForCourse(updated.courseId));
+    await this.cache.bump('courses');
     return this.toPublic(updated, false);
   }
 
@@ -186,6 +213,8 @@ export class ModulesService {
     if (m.pdfContent) await this.storage.removeByUrl(m.pdfContent);
     if (m.videoContent) await this.storage.removeByUrl(m.videoContent);
     await this.prisma.module.delete({ where: { id } });
+    await this.cache.bump(this.versionNameForCourse(m.courseId));
+    await this.cache.bump('courses');
   }
 
   async reorder(courseId: number, pairs: Array<{ id: number; order: number }>) {
@@ -247,6 +276,7 @@ export class ModulesService {
       orderBy: { order: 'asc' },
       select: { id: true, order: true },
     });
+    await this.cache.bump(this.versionNameForCourse(courseId));
 
     return sorted.map((s) => ({ id: String(s.id), order: s.order }));
   }
