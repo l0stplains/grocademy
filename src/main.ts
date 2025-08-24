@@ -4,12 +4,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/filters/http-exception-filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import * as hbs from 'hbs';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
+import { setupSwagger } from './common/swagger/setup-swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -51,14 +51,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Grocademy')
-    .setDescription('Grocademy REST API docs')
-    .setVersion('1.0.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('/docs', app, document);
+  setupSwagger(app);
 
   const PORT = process.env.PORT || 3000;
   await app.listen(PORT, '0.0.0.0');

@@ -15,7 +15,28 @@ import {
   UseInterceptors,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiQuery,
+  ApiResponse,
+  ApiConsumes,
+  ApiCookieAuth,
+  ApiBearerAuth,
+  ApiBody,
+  ApiExtraModels,
+  getSchemaPath,
+} from '@nestjs/swagger';
+import {
+  ApiOkWrapped,
+  ApiOkPaginated,
+  SuccessResponse,
+} from '../../common/swagger/response-wrappers';
+import {
+  ModuleResDto,
+  ReorderPairResDto,
+  CompleteResDto,
+  ReorderListDataResDto,
+} from './dto/module.responses';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -39,6 +60,9 @@ function pdfOrVideoFilter(_req: any, file: Express.Multer.File, cb: Function) {
 }
 
 @ApiTags('Modules')
+@ApiCookieAuth('token')
+@ApiBearerAuth('bearer')
+@ApiExtraModels(ModuleResDto, ReorderPairResDto, CompleteResDto)
 @Controller()
 export class ModulesController {
   constructor(private readonly modules: ModulesService) {}
@@ -48,6 +72,8 @@ export class ModulesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateModuleDto })
+  @ApiResponse(ApiOkWrapped(ModuleResDto))
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -77,8 +103,19 @@ export class ModulesController {
   @Get('api/courses/:courseId/modules')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    schema: { default: 1 },
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    schema: { default: 15, maximum: 50 },
+  })
+  @ApiResponse(ApiOkPaginated(ModuleResDto))
   async list(
     @Param('courseId', ParseIntPipe) courseId: number,
     @Query('page') page = '1',
@@ -100,6 +137,7 @@ export class ModulesController {
   @Get('api/modules/:id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse(ApiOkWrapped(ModuleResDto))
   async get(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: { id: number; role: 'ADMIN' | 'USER' },
@@ -113,6 +151,8 @@ export class ModulesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: UpdateModuleDto })
+  @ApiResponse(ApiOkWrapped(ModuleResDto))
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -142,6 +182,7 @@ export class ModulesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @ApiResponse({ status: 204, description: 'No Content' })
   async remove(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
     await this.modules.remove(id);
     return res.status(HttpStatus.NO_CONTENT).send();
@@ -151,6 +192,17 @@ export class ModulesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @ApiResponse({
+    status: 200,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(SuccessResponse) },
+        {
+          properties: { data: { $ref: getSchemaPath(ReorderListDataResDto) } },
+        },
+      ],
+    },
+  })
   async reorder(
     @Param('courseId', ParseIntPipe) courseId: number,
     @Body() body: ReorderModulesDto,
@@ -162,6 +214,7 @@ export class ModulesController {
   @Patch('api/modules/:id/complete')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse(ApiOkWrapped(CompleteResDto))
   async complete(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: { id: number; role: 'ADMIN' | 'USER' },

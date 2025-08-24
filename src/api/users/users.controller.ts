@@ -12,7 +12,24 @@ import {
   Res,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiQuery,
+  ApiResponse,
+  ApiCookieAuth,
+  ApiBearerAuth,
+  ApiBody,
+  ApiExtraModels,
+} from '@nestjs/swagger';
+import {
+  ApiOkWrapped,
+  ApiOkPaginated,
+} from '../../common/swagger/response-wrappers';
+import {
+  UserItemResDto,
+  UserDetailResDto,
+  IncrementBalanceResDto,
+} from './dto/user.responses';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -23,17 +40,30 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Response } from 'express';
 
 @ApiTags('Users')
-@ApiBearerAuth()
+@ApiCookieAuth('token')
+@ApiBearerAuth('bearer')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
+@ApiExtraModels(UserItemResDto, UserDetailResDto, IncrementBalanceResDto)
 @Controller('api/users')
 export class UsersController {
   constructor(private readonly users: UsersService) {}
 
   @Get()
   @ApiQuery({ name: 'q', required: false })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    schema: { default: 1 },
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    schema: { default: 15, maximum: 50 },
+  })
+  @ApiResponse(ApiOkPaginated(UserItemResDto))
   async list(
     @Query('q') q?: string,
     @Query('page') page = '1',
@@ -53,12 +83,15 @@ export class UsersController {
   }
 
   @Get(':id')
+  @ApiResponse(ApiOkWrapped(UserDetailResDto))
   async get(@Param('id', ParseIntPipe) id: number) {
     const data = await this.users.getById(id);
     return { data };
   }
 
   @Post(':id/balance')
+  @ApiBody({ type: IncrementBalanceDto })
+  @ApiResponse(ApiOkWrapped(IncrementBalanceResDto))
   async inc(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: IncrementBalanceDto,
@@ -68,6 +101,8 @@ export class UsersController {
   }
 
   @Put(':id')
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse(ApiOkWrapped(UserDetailResDto))
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
@@ -77,6 +112,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @ApiResponse({ status: 204, description: 'No Content' })
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() me: { id: number },

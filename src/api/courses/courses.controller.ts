@@ -14,7 +14,26 @@ import {
   Res,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiQuery,
+  ApiResponse,
+  ApiConsumes,
+  ApiCookieAuth,
+  ApiBearerAuth,
+  ApiBody,
+  ApiExtraModels,
+} from '@nestjs/swagger';
+import {
+  ApiOkWrapped,
+  ApiOkPaginated,
+} from '../../common/swagger/response-wrappers';
+import {
+  CourseItemResDto,
+  CourseDetailResDto,
+  BuyCourseResDto,
+  MyCourseItemResDto,
+} from './dto/course.responses';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -31,6 +50,14 @@ function imageFilter(_req: any, file: Express.Multer.File, cb: Function) {
 }
 
 @ApiTags('Courses')
+@ApiCookieAuth('token')
+@ApiBearerAuth('bearer')
+@ApiExtraModels(
+  CourseItemResDto,
+  CourseDetailResDto,
+  BuyCourseResDto,
+  MyCourseItemResDto,
+)
 @Controller('api/courses')
 export class CoursesController {
   constructor(
@@ -39,10 +66,11 @@ export class CoursesController {
   ) {}
 
   @Post()
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateCourseDto })
+  @ApiResponse(ApiOkWrapped(CourseDetailResDto))
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'thumbnail_image', maxCount: 1 }], {
       fileFilter: imageFilter,
@@ -62,8 +90,19 @@ export class CoursesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiQuery({ name: 'q', required: false })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    schema: { default: 1 },
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    schema: { default: 15, maximum: 50 },
+  })
+  @ApiResponse(ApiOkPaginated(CourseItemResDto))
   async list(
     @Query('q') q?: string,
     @Query('page') page = '1',
@@ -88,8 +127,19 @@ export class CoursesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiQuery({ name: 'q', required: false })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    schema: { default: 1 },
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    schema: { default: 15, maximum: 50 },
+  })
+  @ApiResponse(ApiOkPaginated(MyCourseItemResDto))
   async mine(
     @CurrentUser() user: { id: number; role: 'ADMIN' | 'USER' },
     @Query('q') q?: string,
@@ -111,6 +161,7 @@ export class CoursesController {
   @Post(':id/buy')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse(ApiOkWrapped(BuyCourseResDto))
   async buy(
     @Param('id', ParseIntPipe) courseId: number,
     @CurrentUser() user: { id: number; role: 'ADMIN' | 'USER' },
@@ -122,6 +173,7 @@ export class CoursesController {
   @Get(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse(ApiOkWrapped(CourseDetailResDto))
   async get(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: { id: number; role: 'ADMIN' | 'USER' },
@@ -135,6 +187,8 @@ export class CoursesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: UpdateCourseDto })
+  @ApiResponse(ApiOkWrapped(CourseDetailResDto))
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'thumbnail_image', maxCount: 1 }], {
       fileFilter: imageFilter,
@@ -154,6 +208,7 @@ export class CoursesController {
   @Delete(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiResponse({ status: 204, description: 'No Content' })
   @Roles('ADMIN')
   async remove(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
     await this.courses.remove(id);

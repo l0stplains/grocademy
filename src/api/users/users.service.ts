@@ -57,7 +57,13 @@ export class UsersService {
   async getById(id: number) {
     const u = await this.prisma.user.findUnique({ where: { id } });
     if (!u) throw new NotFoundException('User not found');
-    return this.toPublic(u);
+
+    const purchased = await this.prisma.enrollment.count({
+      where: { userId: id },
+    });
+
+    const base = this.toPublic(u);
+    return { ...base, courses_purchased: purchased };
   }
 
   async incrementBalance(id: number, amount: number) {
