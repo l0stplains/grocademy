@@ -22,8 +22,8 @@ export function setupSwagger(app: INestApplication) {
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'bearer',
     )
+    .addServer('https://grocademy.store', 'Live')
     .addServer('http://localhost:3000', 'Local (direct)')
-    .addServer('http://localhost', 'Via Nginx reverse proxy')
     .build();
 
   const doc = SwaggerModule.createDocument(app, config, {
