@@ -34,7 +34,7 @@
   * [B06 – Responsive Layout](#b06--responsive-layout)
   * [B07 – API Documentation](#b07--api-documentation)
   * [B08 – SOLID](#b08--solid)
-  * [B10 – Additional Feature (PWA)](#b10--additional-feature-pwa)
+  * [B10 – Additional Feature (Progressive Web App)](#b10--additional-feature-progressive-web-app)
   * [B11 – Bucket](#b11--bucket)
 * [Screenshots](#screenshots)
 
@@ -104,7 +104,8 @@
 
 > [!IMPORTANT]
 > This instruction will be using script aliases, to see the real script go [here](/package.json)
-> 
+
+
 1. **Start DBs**
 
    ```bash
@@ -167,7 +168,6 @@ Admin FE is provided by our lovely Labpro Assitants here: [https://labpro-ohl-20
 
 > its basically everywhere in nestjs
 
-
 **Why i use it:**
 
 * **Framework decorators** (`@Controller`, `@Get`, etc.) let us declare routes and metadata cleanly, Nest attaches behavior *around* our methods.
@@ -178,8 +178,6 @@ Admin FE is provided by our lovely Labpro Assitants here: [https://labpro-ohl-20
 **Why i use it:** i want to save files either to **local disk** (dev) or **Cloudflare R2** (prod) without sprinkling `if (prod) ... else ...` across the codebase.
 
 **Where it shows up:** The app depends on an **`IStorageService`** interface; at startup i plug in either **LocalStorageService** or **R2StorageService** based on env. Controllers/services never care which one is active.
-
----
 
 ### 3) Proxy
 
@@ -202,19 +200,49 @@ Funny thing is that the [Admin FE](#admin-fe) uses HTTPS so it won't interact wi
 
 The UI updates **without page refresh** after content changes. This uses **long-polling** endpoints (e.g., `/api/poll/courses` and `/api/poll/course/:id/modules`) with **version keys** in Redis. Clients wait until the version increases; when it does, they fetch fresh data. It’s reliable and simple to operate.
 
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/long-polling.gif">
+</p>
+<p align="center"><i>Long-Polling Proof - Live demonstration with New Course Added </i></p>
+
+> You can see the Network tab in Devtools with no caching to see the long-polling requests
+
 ### B04 – Caching
 
 Because i want to implement long polling, it would be "bad" for the database to query unchanged data. so i implement caching.
 
 Hot endpoints (course listing/detail and module listing) run through a Redis cache with a **cache-aside** policy. The cache is **invalidated** by bumping version keys whenever a mutation occurs (create/update/delete). This trims DB load and latency. Quick verification: run `docker exec -it grocademy_redis redis-cli` and type `MONITOR`, while you refreshing the browse course page in a close interval it will logs the cache hits.
 
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/redis.gif">
+</p>
+<p align="center"><i>Caching Proof - Live update redis-cli Monitor on Page Refresh </i></p>
+
 ### B05 – Lighthouse
+
+> [!IMPORTANT]
+> See [Screenshots](#screenshots) for proof
+
+* **Register Page**: (100 + 100 + 100 + 100) / 4 = **100**
+
+* **Login Page**: (100 + 100 + 100 + 100) / 4 = **100**
+
+* **Browse Course Page**: (100 + 94 + 100 + 92) / 4 = **96.5**
+
+* **Course Detail Page**: (100 + 100 + 100 + 91) / 4 = **97.75**
+
+* **My Course Page**: (100 + 98 + 100 + 92) / 4 = **97.5**
+
+* **Course Module Page**: (100 + 95 + 100 + 92) / 4 = **96.75**
 
 
 
 ### B06 – Responsive Layout
 
-
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/responsive.png">
+</p>
+<p align="center"><i>Responsive Proof - Mobile Screenshoots</i></p>
 
 ### B07 – API Documentation
 
@@ -222,7 +250,12 @@ Interactive docs at `/docs` full with Request and Response example that actually
 
 Check it out [https://grocademy.store/docs](https://grocademy.store/docs)
 
-## B08 – SOLID
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/swagger.png">
+</p>
+<p align="center"><i>API Documentation Page</i></p>
+
+### B08 – SOLID
 
 
 **Single Responsibility Principle (SRP)**
@@ -241,9 +274,14 @@ Example, `CacheService` offers a minimal surface, `wrap`  and `bump` (version in
 Controllers rely on domain **services**, not Prisma directly. Services that need storage depend on the **`IStorageService` abstraction** via an injection token; whether it’s Local or R2 is a wiring detail. External systems (Redis, R2, etc.) are wrapped by `CacheService`/storage interfaces and selected by DI providers + environment, not `new` calls sprinkled across the code.
 
 
-### B10 – Additional Feature (PWA)
+### B10 – Additional Feature (Progressive Web App)
 
 I mean, i already implemented responsive layout. just simply adding some manifest and metadata.
+
+<p align="center">
+    <img width="480px" src="/docs/screenshots/pwa.gif">
+</p>
+<p align="center"><i>Progressive Web App Demonstration</i></p>
 
 ### B11 – Bucket
 
@@ -251,18 +289,92 @@ I chose Cloudflare R2 because it compatible with Amazon S3 sdk and good free off
 
 Course media (PDFs/videos/thumbnails/certificates) are uploaded to **Cloudflare R2** by default. Thumbnails are limited to 8MB, PDFs and videos to 100MB.
 
+> [!NOTE]
+> for proof you can inspect element on images and see its source
+
 ---
 
 ## Screenshots
 
-TODO
+### **Register Page**
 
-* **Browse Courses** — `docs/screenshots/browse.png`
-* **Course Detail + Purchase** — `docs/screenshots/course-detail.png`
-* **My Courses (Progress + Certificate)** — `docs/screenshots/my-courses.png`
-* **Modules (PDF/Video Viewer)** — `docs/screenshots/modules.png`
-* **Swagger** — `docs/screenshots/swagger.png`
-* **Lighthouse (each page ≥ 95)** — `docs/screenshots/lighthouse-*.png`
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/register.png">
+</p>
+<p align="center"><i>Register Page</i></p>
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/register-lh.png">
+</p>
+<p align="center"><i>Register Page Light House Result</i></p>
+
+### **Login Page**
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/login.png">
+</p>
+<p align="center"><i>Login Page</i></p>
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/login-lh.png">
+</p>
+<p align="center"><i>Login Page Light House Result</i></p>
+
+### **Browse Course Page**
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/courses.png">
+</p>
+<p align="center"><i>Browse Course Page</i></p>
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/courses-lh.png">
+</p>
+<p align="center"><i>Browse Courses Page Light House Result</i></p>
+
+### **Course Detail Page**
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/course-detail.png">
+</p>
+<p align="center"><i>Course Detail Page</i></p>
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/course-detail-lh.png">
+</p>
+<p align="center"><i>Course Detail Page Light House Result</i></p>
+
+### **My Course Page**
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/my-courses.png">
+</p>
+<p align="center"><i>My Course Page</i></p>
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/my-courses-lh.png">
+</p>
+<p align="center"><i>My Course Page Light House Result</i></p>
+
+### **Course Module Page**
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/module.png">
+</p>
+<p align="center"><i>Course Module Page</i></p>
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/module-lh.png">
+</p>
+<p align="center"><i>Course Module Page Light House Result</i></p>
+
+### **Certificate**
+
+<p align="center">
+    <img width="1280px" src="/docs/screenshots/certificate.png">
+</p>
+<p align="center"><i>Certificate</i></p>
+
 
 ---
 
