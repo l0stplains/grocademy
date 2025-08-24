@@ -1,0 +1,22 @@
+POSTGRES_USER=""
+POSTGRES_PASSWORD=""
+POSTGRES_DB=""
+
+DATABASE_URL=""
+REDIS_URL=""
+
+PORT=3000
+NODE_ENV=development # change to production in production
+JWT_SECRET=""
+
+RUN_SEED=true # for setting up using docker, set to false after first run (it deletes all data and recreates on true)
+TZ=Asia/Jakarta
+
+STORAGE_DRIVER=R2 # Supported: LOCAL, R2 (local will store in ./public/uploads also not fully tested)
+
+R2_ACCOUNT_ID=""
+R2_ACCESS_KEY_ID=""
+R2_SECRET_ACCESS_KEY=""
+R2_BUCKET=:""
+
+R2_PUBLIC_BASE=""
