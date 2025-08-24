@@ -31,9 +31,9 @@ data-course-id="' courseId '" data-selected-id="' (or (and selected selected.id)
       <p class="muted">{{selected.description}}</p>
 
       {{#if selected.pdf_content}}
-      <div class="media-frame tall" style="margin:12px 0">
-        <iframe src="{{selected.pdf_content}}#toolbar=1&navpanes=1" title="Module PDF"
-          style="width:100%;height:100%;border:0"></iframe>
+      <div class="media-frame media-frame--pdf" style="margin:12px 0">
+        <iframe src="{{selected.pdf_content}}#view=FitH&zoom=page-width" title="Module PDF" loading="lazy"
+          referrerpolicy="no-referrer"></iframe>
       </div>
       <div class="row">
         <a class="btn" href="{{selected.pdf_content}}" target="_blank" rel="noopener">Open PDF in new tab</a>
@@ -42,8 +42,8 @@ data-course-id="' courseId '" data-selected-id="' (or (and selected selected.id)
       {{/if}}
 
       {{#if selected.video_content}}
-      <div class="media-frame tall" style="margin:12px 0">
-        <video controls style="width:100%;height:100%">
+      <div class="media-frame media-frame--video" style="margin:12px 0">
+        <video controls playsinline preload="metadata" controlsList="nodownload noplaybackrate">
           <source src="{{selected.video_content}}">
         </video>
       </div>
