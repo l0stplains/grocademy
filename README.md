@@ -18,6 +18,7 @@
 
 * [Author](#author)
 * [Tech Stack](#tech-stack)
+* [Endpoints Made](#endpoints-made)
 * [How to Run](#how-to-run)
 
   * [Local Dev](#local-dev)
@@ -95,6 +96,58 @@
 * Docker / Docker Compose **v2**
 * Caddy **2** (reverse proxy + automatic TLS)
 * Cloudflare R2 (S3-compatible object storage)
+
+---
+
+## Endpoints Made
+
+> you can also check it here [https://grocademy.store/docs](https://grocademy.store/docs)
+
+| Endpoint                                  | Method  | Description |
+|-------------------------------------------|---------|-------------|
+| **Auth**                                  |         |             |
+| /api/auth/login                           | POST    | Login user |
+| /api/auth/register                        | POST    | Register a new user |
+| /api/auth/self                            | GET     | Get current authenticated user |
+| **Courses**                               |         |             |
+| /api/courses                              | POST    | Create a new course |
+| /api/courses                              | GET     | Get all courses |
+| /api/courses/{id}                         | GET     | Get a course by ID |
+| /api/courses/{id}                         | PUT     | Update a course by ID |
+| /api/courses/{id}                         | DELETE  | Delete a course by ID |
+| /api/courses/{id}/buy                     | POST    | Buy a course |
+| /api/courses/my-courses                   | GET     | Get courses owned by the current user |
+| **Modules**                               |         |             |
+| /api/courses/{courseId}/modules           | POST    | Create a module for a course |
+| /api/courses/{courseId}/modules           | GET     | Get all modules of a course |
+| /api/courses/{courseId}/modules/reorder   | PATCH   | Reorder modules of a course |
+| /api/modules/{id}                         | GET     | Get a module by ID |
+| /api/modules/{id}                         | PUT     | Update a module by ID |
+| /api/modules/{id}                         | DELETE  | Delete a module by ID |
+| **Users**                                 |         |             |
+| /api/users                                | GET     | Get all users |
+| /api/users/{id}                           | GET     | Get a user by ID |
+| /api/users/{id}                           | PUT     | Update a user by ID |
+| /api/users/{id}                           | DELETE  | Delete a user by ID |
+| /api/users/{id}/balance                   | POST    | Increment user balance |
+| /api/modules/{id}/complete                | PATCH   | Mark a module as complete |
+| **Polling**                               |         |             |
+| /api/poll/course/{id}/modules             | GET     | Poll course modules updates |
+| /api/poll/courses                         | GET     | Poll courses updates |
+| /api/poll/version/course/{id}/modules     | GET     | Poll versioned course modules updates |
+| /api/poll/version/courses                 | GET     | Poll versioned courses updates |
+| **Pages**                                 |         |             |
+| /courses                                  | GET     | Courses listing page |
+| /courses/{id}                             | GET     | Course details page |
+| /courses/{id}/buy                         | POST    | Buy a course (web endpoint) |
+| /courses/{id}/modules                     | GET     | Get modules for a course (web) |
+| /login                                    | GET     | Login page |
+| /login                                    | POST    | Submit login form |
+| /logout                                   | POST    | Logout current user |
+| /modules/{id}/complete                    | POST    | Complete a module (web) |
+| /my-courses                               | GET     | My courses page |
+| /register                                 | GET     | Register page |
+| /register                                 | POST    | Submit registration form |
 
 ---
 
