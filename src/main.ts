@@ -70,7 +70,11 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
+      methods: ['GET','HEAD','PUT','PATCH','POST','DELETE','OPTIONS'],
+      allowedHeaders: ['Content-Type','Authorization'],
+      exposedHeaders: ['Content-Disposition'],
   });
+  app.set('trust proxy', 1);
 
   setupSwagger(app);
 

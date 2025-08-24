@@ -38,38 +38,40 @@ services:
       NODE_ENV: production
       TZ: ${TZ}
       PORT: ${PORT}
-
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
-
       JWT_SECRET: ${JWT_SECRET}
       RUN_SEED: ${RUN_SEED}
-
       STORAGE_DRIVER: ${STORAGE_DRIVER}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
       R2_BUCKET: ${R2_BUCKET}
       R2_PUBLIC_BASE: ${R2_PUBLIC_BASE}
-
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     expose:
-      - "3000"
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: grocademy_nginx
+      - "3000"   # internal only, no host port
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: grocademy_caddy
     restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       app:
         condition: service_started
-    ports:
-      - "80:80"
-    volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   pgdata:
+  caddy_data:
+  caddy_config:
