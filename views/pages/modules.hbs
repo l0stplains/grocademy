@@ -31,19 +31,17 @@ data-course-id="' courseId '" data-selected-id="' (or (and selected selected.id)
       <p class="muted">{{selected.description}}</p>
 
       {{#if selected.pdf_content}}
-      <div class="media-frame media-frame--pdf" style="margin:12px 0">
-        <iframe src="{{selected.pdf_content}}#view=FitH&zoom=page-width" title="Module PDF" loading="lazy"
-          referrerpolicy="no-referrer"></iframe>
+      <div class="media-frame media-pdf">
+        <embed src="{{selected.pdf_content}}#zoom=page-width&view=FitH" type="application/pdf" title="Module PDF" />
       </div>
       <div class="row">
         <a class="btn" href="{{selected.pdf_content}}" target="_blank" rel="noopener">Open PDF in new tab</a>
-        <a class="btn ghost" href="{{selected.pdf_content}}" download>Download</a>
       </div>
       {{/if}}
 
       {{#if selected.video_content}}
-      <div class="media-frame media-frame--video" style="margin:12px 0">
-        <video controls playsinline preload="metadata" controlsList="nodownload noplaybackrate">
+      <div class="media-frame media-video">
+        <video controls playsinline preload="metadata">
           <source src="{{selected.video_content}}">
         </video>
       </div>
@@ -55,7 +53,7 @@ data-course-id="' courseId '" data-selected-id="' (or (and selected selected.id)
       {{#unless selected.is_completed}}
       <form id="complete-module-form" method="post" action="/modules/{{selected.id}}/complete?courseId={{../courseId}}"
         data-module-id="{{selected.id}}">
-        <button class="btn primary" type="submit">Mark as completed</button>
+        <button class="btn primary" type="submit" style="margin-top: 12px">Mark as completed</button>
       </form>
       {{/unless}}
 
