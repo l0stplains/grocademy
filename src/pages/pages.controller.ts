@@ -148,6 +148,7 @@ export class PagesController {
     @Query('purchased') purchased?: string,
     @Query('error') error?: string,
   ) {
+    const viewUser = await this.withBalance(user);
     const data = await this.courses.findById(id, user.id);
     const cert = await this.prisma.certificate.findUnique({
       where: { userId_courseId: { userId: user.id, courseId: id } },
@@ -157,7 +158,7 @@ export class PagesController {
       description: data.description.slice(0, 160),
       ogImage: data.thumbnail_image,
       canonical: `/courses/${id}`,
-      user,
+      user: viewUser,
       course: data,
       certificate_url: cert?.url ?? null,
       flash: purchased ? 'Purchase successful!' : null,
