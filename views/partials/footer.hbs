@@ -1,7 +1,17 @@
-<footer class="container muted" style="padding-top:28px;padding-bottom:28px;">
-  <div class="hr"></div>
-  <div class="space-between">
-    <span>© {{year}} Grocademy</span>
-    <span>Learn better, faster.</span>
+{{#if flash}}
+  <div class="container">
+    <div class="alert {{#if flash.error}}error{{else}}success{{/if}}">{{flash.message}}</div>
+  </div>
+{{/if}}
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="hr"></div>
+    <div class="space-between">
+      <span>© {{year}} Grocademy</span>
+      <span>OHL Labpro 2025</span>
+    </div>
   </div>
 </footer>
+</body>
+</html>

@@ -1,38 +1,61 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>{{title}}</title>
-  <link rel="stylesheet" href="/static/css/styles.css" />
-  <script defer src="/static/assets/js/app.js"></script>
-</head>
-<body>
-  {{> navbar page="mine" user=user}}
-  <main class="container">
-    <div class="space-between">
-      <h1>My Courses</h1>
-      <form class="row" method="get" action="/my-courses" data-debounce="search">
-        <input name="q" placeholder="Search my courses" value="{{q}}">
-        <button class="btn" type="submit">Search</button>
-      </form>
+{{> head title=title description=description canonical=canonical}}
+{{> navbar page="mine" user=user}}
+
+<main class="container">
+  <div class="space-between">
+    <h1>My Courses</h1>
+    <form class="search-row" method="get" action="/my-courses">
+      <input name="q" placeholder="Search my courses" value="{{q}}">
+      <button class="btn" type="submit">Search</button>
+    </form>
+  </div>
+
+
+  <section class="grid" style="margin-top:12px">
+    <div class="card stats">
+      <div class="row" style="justify-content:space-between">
+        <div><strong>Total courses</strong>
+          <div class="muted">{{stats.total}}</div>
+        </div>
+        <div><strong>Average progress</strong>
+          <div class="muted">{{stats.avgProgress}}%</div>
+        </div>
+        <div><strong>Balance</strong>
+          <div class="muted">${{user.balance}}</div>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <section class="grid cards" style="margin-top:16px">
-      {{#each courses}}
-        <a class="card" href="/courses/{{this.id}}">
-          <img class="thumb" src="{{this.thumbnail_image}}" alt="" onerror="this.style.display='none'">
-          <h3>{{this.title}}</h3>
-          <p class="muted">{{this.instructor}}</p>
-          <div class="progress" aria-label="Progress"><div style="width: {{this.progress_percentage}}%"></div></div>
-          <p class="muted">Purchased: {{this.purchased_at}}</p>
-        </a>
-      {{/each}}
-    </section>
+  <section class="grid cards" style="margin-top:16px">
+    {{#each courses}}
+    <a class="card" href="/courses/{{this.id}}">
+      <div class="thumb-frame">
+        <div class="thumb-placeholder" aria-hidden="true"></div>
+        {{#if this.thumbnail_image}}<img class="thumb-img" src="{{this.thumbnail_image}}" alt="">{{/if}}
+      </div>
+      <h3 class="line-clamp-2">{{this.title}}</h3>
+      <p class="muted truncate">By {{this.instructor}}</p>
+      <div style="margin:.5rem 0">
+        {{#each this.topics}} <span class="badge topic">{{this}}</span> {{/each}}
+      </div>
+      <div class="progress" aria-label="Progress">
+        <div style="width: {{this.progress_percentage}}%"></div>
+      </div>
+      <p class="muted">Purchased: {{formatDate this.purchased_at}}</p>
+    </a>
+    {{/each}}
+  </section>
 
-    <nav class="pagination" aria-label="Pagination">
-      <span>Page {{pagination.current_page}} / {{pagination.total_pages}}</span>
-    </nav>
-  </main>
-  {{> footer year="2025"}}
-</body>
-</html>
+  <nav class="pagination" aria-label="Pagination">
+    {{#if (gt pagination.current_page 1)}}
+    <a href="?q={{q}}&page={{dec pagination.current_page}}">Prev</a>
+    {{/if}}
+    <span>Page {{pagination.current_page}} / {{pagination.total_pages}}</span>
+    {{#if (lt pagination.current_page pagination.total_pages)}}
+    <a href="?q={{q}}&page={{inc pagination.current_page}}">Next</a>
+    {{/if}}
+  </nav>
+</main>
+
+{{> footer year="2025"}}

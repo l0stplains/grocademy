@@ -18,6 +18,7 @@ import { ModulesService } from '../api/modules/modules.service';
 import { PageAuthGuard } from '../common/guards/page-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { RegisterDto } from 'src/api/auth/dto/register.dto';
 
 @Controller('/')
 export class PagesController {
@@ -28,6 +29,23 @@ export class PagesController {
     private readonly purchases: PurchasesService,
     private readonly prisma: PrismaService,
   ) {}
+
+  private async withBalance(user: {
+    id: number;
+    role: 'ADMIN' | 'USER';
+    username: string;
+  }) {
+    const balance =
+      (
+        await this.prisma.user.findUnique({
+          where: { id: user.id },
+          select: { balance: true },
+        })
+      )?.balance ?? 0;
+    return { ...user, balance };
+  }
+
+  private readonly PAGE_SIZE = 12;
 
   @Get('login')
   loginPage(@Res() res: Response, @Query('ok') ok?: string) {
@@ -66,31 +84,17 @@ export class PagesController {
   }
 
   @Post('register')
-  async register(
-    @Body()
-    body: {
-      email: string;
-      username: string;
-      first_name: string;
-      last_name: string;
-      password: string;
-      confirm_password: string;
-    },
-    @Res() res: Response,
-  ) {
+  async register(@Body() dto: RegisterDto, @Res() res: Response) {
     try {
-      await this.auth.register({
-        email: body.email,
-        username: body.username,
-        firstName: body.first_name,
-        lastName: body.last_name,
-        password: body.password,
-        confirm_password: body.confirm_password,
-      } as any);
+      await this.auth.register(dto);
       res.redirect('/login?ok=1');
     } catch (e: any) {
+      const errMsg =
+        e?.response?.message?.join?.('\n') ||
+        e?.message ||
+        'Registration failed';
       res.status(HttpStatus.BAD_REQUEST).render('pages/register', {
-        error: e?.message ?? 'Registration failed',
+        error: errMsg,
         title: 'Register - Grocademy',
       });
     }
@@ -114,34 +118,27 @@ export class PagesController {
     @Query('limit') limit = '15',
     @Res() res: Response,
   ) {
+    const viewUser = await this.withBalance(user);
     const { items, pagination } = await this.courses.list(
       q || undefined,
       Number(page),
-      Number(limit),
+      this.PAGE_SIZE,
       user.id,
     );
     res.render('pages/courses', {
       title: 'Browse Courses - Grocademy',
-      user: {
-        ...user,
-        balance:
-          (
-            await this.prisma.user.findUnique({
-              where: { id: user.id },
-              select: { balance: true },
-            })
-          )?.balance ?? 0,
-      },
+      description: 'Browse courses on Grocademy.',
+      canonical: '/courses',
+      user: viewUser,
       q,
       page: Number(page),
-      limit: Number(limit),
       courses: items,
       pagination,
     });
+
     return { __raw: true, payload: null };
   }
 
-  @UseGuards(PageAuthGuard)
   @Get('/courses/:id')
   async courseDetail(
     @Param('id', ParseIntPipe) id: number,
@@ -149,6 +146,7 @@ export class PagesController {
     user: { id: number; role: 'ADMIN' | 'USER'; username: string },
     @Res() res: Response,
     @Query('purchased') purchased?: string,
+    @Query('error') error?: string,
   ) {
     const data = await this.courses.findById(id, user.id);
     const cert = await this.prisma.certificate.findUnique({
@@ -156,10 +154,14 @@ export class PagesController {
     });
     res.render('pages/course_detail', {
       title: data.title + ' - Grocademy',
+      description: data.description.slice(0, 160),
+      ogImage: data.thumbnail_image,
+      canonical: `/courses/${id}`,
       user,
       course: data,
       certificate_url: cert?.url ?? null,
       flash: purchased ? 'Purchase successful!' : null,
+      error,
     });
     return { __raw: true, payload: null };
   }
@@ -192,30 +194,34 @@ export class PagesController {
     @Query('limit') limit = '15',
     @Res() res: Response,
   ) {
+    const viewUser = await this.withBalance(user);
     const { items, pagination } = await this.purchases.myCourses(
       user.id,
       q || undefined,
       Number(page),
-      Number(limit),
+      this.PAGE_SIZE,
     );
+
+    // quick stats
+    const total = items.length;
+    const avgProgress = total
+      ? Math.round(
+          items.reduce((a, c) => a + (c.progress_percentage || 0), 0) / total,
+        )
+      : 0;
+
     res.render('pages/my_courses', {
       title: 'My Courses - Grocademy',
-      user: {
-        ...user,
-        balance:
-          (
-            await this.prisma.user.findUnique({
-              where: { id: user.id },
-              select: { balance: true },
-            })
-          )?.balance ?? 0,
-      },
+      description: 'Your purchased courses and learning progress on Grocademy.',
+      canonical: '/my-courses',
+      user: viewUser,
       q,
       page: Number(page),
-      limit: Number(limit),
       courses: items,
       pagination,
+      stats: { total, avgProgress },
     });
+
     return { __raw: true, payload: null };
   }
 
@@ -245,14 +251,19 @@ export class PagesController {
     const selected = selectedId
       ? await this.modules.getById(selectedId, user)
       : null;
+    const viewUser = await this.withBalance(user);
     res.render('pages/modules', {
       title: 'Modules - Grocademy',
-      user,
+      description:
+        'Study course modules (PDFs/Videos), track progress, and get your certificate.',
+      canonical: `/courses/${courseId}/modules`,
+      user: viewUser,
       courseId,
       modules,
       selected,
       pagination: list.pagination,
     });
+
     return { __raw: true, payload: null };
   }
 

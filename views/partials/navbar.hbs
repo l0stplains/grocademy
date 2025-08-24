@@ -1,20 +1,26 @@
-<nav class="nav">
+<nav class="nav" role="navigation" aria-label="Primary">
   <div class="nav-inner">
-    <a href="/courses" class="brand">
-      <img src="/static/assets/img/logo.webp" alt="Grocademy" />
-      Grocademy
+    <a href="/courses" class="brand" aria-label="Grocademy home">
+      <img src="/static/assets/img/logo.webp" alt="" />
+      <span>Grocademy</span>
     </a>
-    <div class="nav-links">
+
+    <button id="nav-toggle" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu"
+      aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div id="nav-menu" class="nav-links">
+      {{#if user}}
       <a href="/courses" class="{{#if (eq page 'browse')}}active{{/if}}">Browse</a>
       <a href="/my-courses" class="{{#if (eq page 'mine')}}active{{/if}}">My Courses</a>
-      {{#if user}}
-        <span class="balance-pill">Balance: ${{user.balance}}</span>
-        <form action="/logout" method="post" style="display:inline">
-          <button class="btn ghost" type="submit">Logout ({{user.username}})</button>
-        </form>
+      <span class="balance-pill" aria-label="Current balance">Balance: ${{user.balance}}</span>
+      <form action="/logout" method="post" style="display:inline">
+        <button class="btn ghost" type="submit">Logout ({{user.username}})</button>
+      </form>
       {{else}}
-        <a class="btn" href="/login">Login</a>
-        <a class="btn primary" href="/register">Register</a>
+      <a class="btn" href="/login">Login</a>
+      <a class="btn primary" href="/register">Register</a>
       {{/if}}
     </div>
   </div>

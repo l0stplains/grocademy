@@ -1,42 +1,45 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>{{title}}</title>
-  <link rel="stylesheet" href="/static/css/styles.css" />
-  <script defer src="/static/assets/js/app.js"></script>
-</head>
-<body data-poll="courses">
-  {{> navbar page="browse" user=user}}
-  <main class="container">
-    <section id="courses-grid" class="grid cards" style="margin-top:16px">
-      {{#each courses}}
-        <a class="card" href="/courses/{{this.id}}">
-          <img class="thumb" src="{{this.thumbnail_image}}" alt="" onerror="this.style.display='none'">
-          <h3>{{this.title}}</h3>
-          <p class="muted">By {{this.instructor}}</p>
-          <div style="margin:.5rem 0">
-            {{#each this.topics}} <span class="badge topic">{{this}}</span> {{/each}}
-          </div>
-          <div class="space-between">
-            <span class="badge price">Modules: {{this.total_modules}}</span>
-            {{#if this.is_purchased}} <span class="badge owned">Owned</span> {{else}} <span class="badge">Price: ${{this.price}}</span> {{/if}}
-          </div>
-        </a>
-      {{/each}}
-    </section>
+{{> head title=title description=description canonical=canonical bodyAttrs='data-poll="courses"'}}
+{{> navbar page="browse" user=user}}
 
-    <nav id="courses-pagination" class="pagination" aria-label="Pagination">
-      {{#if (gt pagination.current_page 1)}}
-        <a href="?q={{q}}&limit={{limit}}&page={{dec pagination.current_page}}">Prev</a>
-      {{/if}}
-      <span>Page {{pagination.current_page}} / {{pagination.total_pages}}</span>
-      {{#if (lt pagination.current_page pagination.total_pages)}}
-        <a href="?q={{q}}&limit={{limit}}&page={{inc pagination.current_page}}">Next</a>
-      {{/if}}
-    </nav>
-  </main>
-  {{> footer year="2025"}}
-</body>
+<main class="container">
+  <div class="space-between">
+    <h1>Browse Courses</h1>
+    <form class="search-row" method="get" action="/courses">
+      <input name="q" placeholder="Search courses" value="{{q}}">
+      <button class="btn" type="submit">Search</button>
+    </form>
+  </div>
 
-</html>
+  <section id="courses-grid" class="grid cards" style="margin-top:16px">
+    {{#each courses}}
+    <a class="card" href="/courses/{{this.id}}">
+      <div class="thumb-frame">
+        <div class="thumb-placeholder" aria-hidden="true"></div>
+        {{#if this.thumbnail_image}}<img class="thumb-img" src="{{this.thumbnail_image}}" alt="">{{/if}}
+      </div>
+      <h3 class="line-clamp-2" title="{{this.title}}">{{this.title}}</h3>
+      <p class="muted truncate" title="{{this.instructor}}">By {{this.instructor}}</p>
+      <div style="margin:.5rem 0">
+        {{#each this.topics}} <span class="badge topic">{{this}}</span> {{/each}}
+      </div>
+      <div class="space-between">
+        <span class="badge price">Modules: {{this.total_modules}}</span>
+        {{#if this.is_purchased}} <span class="badge owned">Owned</span>
+        {{else}} <span class="badge">Price: ${{this.price}}</span> {{/if}}
+      </div>
+    </a>
+    {{/each}}
+  </section>
+
+  <nav id="courses-pagination" class="pagination" aria-label="Pagination">
+    {{#if (gt pagination.current_page 1)}}
+    <a href="?q={{q}}&page={{dec pagination.current_page}}">Prev</a>
+    {{/if}}
+    <span>Page {{pagination.current_page}} / {{pagination.total_pages}}</span>
+    {{#if (lt pagination.current_page pagination.total_pages)}}
+    <a href="?q={{q}}&page={{inc pagination.current_page}}">Next</a>
+    {{/if}}
+  </nav>
+</main>
+
+{{> footer year="2025"}}

@@ -33,12 +33,23 @@ async function bootstrap() {
   );
   (hbs as any).registerHelper('gt', (a: any, b: any) => Number(a) > Number(b));
   (hbs as any).registerHelper('lt', (a: any, b: any) => Number(a) < Number(b));
+  (hbs as any).registerHelper('formatDate', (iso: any) => {
+    if (!iso) return '';
+    const d = new Date(String(iso));
+    return d.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      transformOptions: { enableImplicitConversion: true },
+      validationError: { target: false },
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
