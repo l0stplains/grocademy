@@ -34,12 +34,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
       );
     }
 
-    response.status(status).json({
-      status: 'error',
-      message,
-      data: null,
-      path: request.url,
-      timestamp: new Date().toISOString(),
-    });
+    if (!response.headersSent) {
+      response.status(status).json({
+        status: 'error',
+        message,
+        data: null,
+        path: request.url,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 }

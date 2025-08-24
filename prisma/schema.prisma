@@ -28,7 +28,6 @@ model User {
   courses     Course[]  @relation("creatorCourses")
   completions Completion[]
   certificates Certificate[]
-  reviews     Review[]
 }
 
 model Course {
@@ -46,7 +45,6 @@ model Course {
   creatorId    Int?
   modules      Module[]
   enrollments  Enrollment[]
-  reviews      Review[]
   certificates Certificate[]
 
   @@index([title])
@@ -106,19 +104,4 @@ model Certificate {
   issuedAt DateTime @default(now())
 
   @@unique([userId, courseId])
-}
-
-model Review {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId  Int
-  rating    Int      // 1..5
-  comment   String?  @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, courseId])
-  @@index([courseId])
 }
