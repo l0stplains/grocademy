@@ -42,6 +42,16 @@ async function bootstrap() {
       day: '2-digit',
     });
   });
+  (hbs as any).registerHelper('and', (a: any, b: any) => Boolean(a && b));
+  (hbs as any).registerHelper('or', (a: any, b: any) => Boolean(a || b));
+
+  // string helpers
+  (hbs as any).registerHelper('concat', (...args: any[]) =>
+    args.slice(0, -1).join(''),
+  );
+  (hbs as any).registerHelper('default', (v: any, d: any) =>
+    v !== undefined && v !== null && v !== '' ? v : d,
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({
