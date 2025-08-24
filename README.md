@@ -3,7 +3,7 @@
 > Seleksi 3 Laboratorium Programming 2025
 
 <p align="center">
-  <img width="1280" src="https://github.com/user-attachments/assets/4854f902-6bda-4a0e-87b2-b5ff801a23d5" alt="Grocademy logo">
+  <img width="1280" src="/docs/banner.png" alt="Grocademy logo">
 </p>
 <p align="center">
 <b>Live:</b> <a href="https://grocademy.store" target=_blank>https://grocademy.store</a>
